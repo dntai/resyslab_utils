@@ -1,0 +1,14 @@
+# common file
+*.py[cod]
+desktop.ini
+
+# common folder
+__pycache__/
+.*/
+temps/
+
+# project
+
+# exceptions
+!.keep
+!.gitignore
