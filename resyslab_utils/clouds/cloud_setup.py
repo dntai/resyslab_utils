@@ -216,3 +216,14 @@ def setup_config_github(id_rsa_val, id_rsa_name, hostname="github.com", append =
     print('> Test ssh...')
     get_ipython().system(f'ssh {hostname}')
     pass # setup_config_github
+
+def base64_encode(s):
+    import os
+    result = os.popen(f'echo "{s}" | base64 -w 0').read().strip()
+    return result
+    pass # base64_encode
+
+def base64_decode(s):
+    import base64
+    return base64.b64decode(s).decode('ascii')
+    pass # base64_decode
