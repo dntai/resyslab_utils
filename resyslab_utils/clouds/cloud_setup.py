@@ -69,36 +69,37 @@ def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = 
     print(f'{"-" * 10} Finished {"-"*10}\n')
     pass # start_ssh
 
-def start_ngrok(ngrok_tokens = [], ngrok_handler = None, only_kill = False):
+def start_ngrok(ngrok_tokens = [], 
+                ngrok_binds  = {
+                    'ssh': {'port':22, 'type':'tcp'}, 
+                    'vscode': {'port':9000, 'type':'http'}
+                }
+               ):
     """
     start_ngrok:
     + ngrok_tokens: list of token getting from Authtoken in dashboard at https://ngrok.com
-    + ngrok_handler: registry handler where default:
-        def default_handler(ngrok, ngrok_info = {}):
-        # bind with code-server: port 9000
-        # vscode_tunnel = ngrok.connect(9000, "http")
-
-        # bind with ssh: port 22
-        try:
-            ssh_tunnel = ngrok.connect(22, "tcp")
-            ngrok_info["ssh"] = ssh_tunnel
-        except:
-            pass
-        pass # default_handler
+    + ngrok_binds : default: 
+        {
+            'ssh'   : {'port':22, 'type':'tcp'}, 
+            'vscode': {'port':9000, 'type':'http'}
+        }
     """
     def default_handler(ngrok, ngrok_info = {}):
         # bind with code-server: port 9000
         # vscode_tunnel = ngrok.connect(9000, "http")
         
-        # bind with ssh: port 22
-        try:
-            ssh_tunnel = ngrok.connect(22, "tcp")
-            ngrok_info["ssh"] = ssh_tunnel
-        except:
+        # bind with ports
+        for name in ngrok_binds:
+            try:
+                tunnel = ngrok.connect(ngrok_binds[name].get('port', 80), 
+                                   ngrok_binds[name].get('type', 'tcp'))
+                ngrok_info[name] = tunnel
+            except:
+                print('failt')
             pass
         pass # default_handler
     
-    print(f'{"*" * 10} START NGROK {"*"*10}')
+    print(f'{"*" * 10} SETUP NGROK {"*"*10}')
     try:
         from pyngrok import ngrok, conf
     except:
@@ -110,37 +111,72 @@ def start_ngrok(ngrok_tokens = [], ngrok_handler = None, only_kill = False):
     print(f'> Kill ngrok process...')
     get_ipython().system('kill -9 "$(pgrep ngrok)"')
     
-    if only_kill is False:    
-        print(f'> Binding ports...')
-        list_regions = ["us", "en", "au", "vn"]
-        url, ssh_tunnel = None, None
-        is_success = False
-        ngrok_info = {}
-        for auth_token in ngrok_tokens:
-            if is_success: break
-            for region in list_regions:  
-                try:
-                    conf.get_default().region = region
-                    ngrok.set_auth_token(auth_token)
+    print(f'> Binding ports...')
+    list_regions = ["us", "en", "au", "vn"]
+    url, ssh_tunnel = None, None
+    is_success = False
+    ngrok_info = {}
+    for auth_token in ngrok_tokens:
+        if is_success: break
+        for region in list_regions:  
+            try:
+                conf.get_default().region = region
+                ngrok.set_auth_token(auth_token)
 
-                    if ngrok_handler is None:
-                        default_handler(ngrok, ngrok_info)
-                    else:
-                        ngrok_handler(ngrok, ngrok_info)
+                default_handler(ngrok, ngrok_info)
 
-                    print("> Registry success!")
-                    is_success = True
-                    break
-                except Exception as e:
-                    print(e)
-                    pass    
-            # for
+                print("> Registry success!")
+                is_success = True
+                break
+            except Exception as e:
+                print(e)
+                pass    
+        # for
 
-        for key in ngrok_info:
-            print(f'{key}: {ngrok_info[key]}')
-        pass # binding
+    for key in ngrok_info:
+        print(f'{key}: {ngrok_info[key]}')
     
     print(f"")
     print(f'{"-" * 10} Finished {"-"*10}\n')
     pass # start_ngrok
 
+def start_vscode(ws_dir = ".", 
+                 password = "12345", 
+                 vscode_dir = '~/.vscode', 
+                 install = False, 
+                 extensions = ["ms-python.python", 
+                               "ms-toolsai.jupyter", 
+                               "mechatroner.rainbow-csv", 
+                               "vscode-icons-team.vscode-icons"]):
+    print(f'{"*" * 10} SETUP VSCODE {"*"*10}')
+    
+    import os
+    # vscode-server config
+    extensions_dir=f"{vscode_dir}/extensions"
+    user_data_dir=f"{vscode_dir}/user_data"
+
+    get_ipython().system(f'mkdir -p {extensions_dir}')
+    get_ipython().system(f'mkdir -p {user_data_dir}')
+
+    # install code-server and start with port 9000
+    if install is True:
+        print('> Install Code-Server...')
+        get_ipython().system('curl -fsSL https://code-server.dev/install.sh | sh 2>&1 > /dev/null')
+
+    print('> Run code-server...')
+    get_ipython().system(f'sudo screen -dmS vscode bash -c "PASSWORD=\"{password}\" code-server --port 9000 --bind-addr 0.0.0.0 --user-data-dir={user_data_dir} --extensions-dir={extensions_dir} --disable-telemetry {ws_dir}"')
+    print(f"")
+
+    print('> Download and Install code-server...')
+    for extension in extensions:
+        print(f'Install extension: {extension}...')
+        get_ipython().system('code-server --install-extension $extension 2>&1 > /dev/null')
+    print(f"")
+
+    print('> Screen Background...')
+    get_ipython().system('screen -wipe')
+    get_ipython().system('screen -ls')
+    
+    print(f"")
+    print(f'{"-" * 10} Finished {"-"*10}\n')
+    pass # start_vscode
