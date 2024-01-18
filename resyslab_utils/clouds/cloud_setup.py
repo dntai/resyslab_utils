@@ -50,7 +50,7 @@ def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = 
 
     if password != "":
         get_ipython().system('echo "> Set root password..."')
-        get_ipython().system('echo -e "$password\n$password" | passwd root >/dev/null 2>&1')
+        get_ipython().system(f'echo -e "$password\n{password}" | passwd root >/dev/null 2>&1')
 
     get_ipython().system('echo "> Restart SSH service..."')
     get_ipython().system('service ssh restart')
