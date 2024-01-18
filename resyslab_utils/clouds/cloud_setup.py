@@ -68,3 +68,79 @@ def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = 
     
     print(f'{"-" * 10} Finished {"-"*10}\n')
     pass # start_ssh
+
+def start_ngrok(ngrok_tokens = [], ngrok_handler = None, only_kill = False):
+    """
+    start_ngrok:
+    + ngrok_tokens: list of token getting from Authtoken in dashboard at https://ngrok.com
+    + ngrok_handler: registry handler where default:
+        def default_handler(ngrok, ngrok_info = {}):
+        # bind with code-server: port 9000
+        # vscode_tunnel = ngrok.connect(9000, "http")
+
+        # bind with ssh: port 22
+        try:
+            ssh_tunnel = ngrok.connect(22, "tcp")
+            ngrok_info["ssh"] = ssh_tunnel
+        except:
+            pass
+        pass # default_handler
+    """
+    def default_handler(ngrok, ngrok_info = {}):
+        # bind with code-server: port 9000
+        # vscode_tunnel = ngrok.connect(9000, "http")
+        
+        # bind with ssh: port 22
+        try:
+            ssh_tunnel = ngrok.connect(22, "tcp")
+            ngrok_info["ssh"] = ssh_tunnel
+        except:
+            pass
+        pass # default_handler
+    
+    print(f'{"*" * 10} START NGROK {"*"*10}')
+    try:
+        from pyngrok import ngrok, conf
+    except:
+        # install pyngrok
+        print(f'> Install ngrok...')
+        get_ipython().system('pip install -qqq pyngrok 2>&1 > /dev/null')
+        from pyngrok import ngrok, conf
+
+    print(f'> Kill ngrok process...')
+    get_ipython().system('kill -9 "$(pgrep ngrok)"')
+    
+    if only_kill is False:    
+        print(f'> Binding ports...')
+        list_regions = ["us", "en", "au", "vn"]
+        url, ssh_tunnel = None, None
+        is_success = False
+        ngrok_info = {}
+        for auth_token in ngrok_tokens:
+            if is_success: break
+            for region in list_regions:  
+                try:
+                    conf.get_default().region = region
+                    ngrok.set_auth_token(auth_token)
+
+                    if ngrok_handler is None:
+                        default_handler(ngrok, ngrok_info)
+                    else:
+                        ngrok_handler(ngrok, ngrok_info)
+
+                    print("> Registry success!")
+                    is_success = True
+                    break
+                except Exception as e:
+                    print(e)
+                    pass    
+            # for
+
+        for key in ngrok_info:
+            print(f'{key}: {ngrok_info[key]}')
+        pass # binding
+    
+    print(f"")
+    print(f'{"-" * 10} Finished {"-"*10}\n')
+    pass # start_ngrok
+
