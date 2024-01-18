@@ -186,7 +186,7 @@ def setup_config_github(id_rsa_val, id_rsa_name, hostname="github.com", append =
     
     print('> Add id_rsa...')
     get_ipython().system('mkdir -p ~/.ssh')
-    get_ipython().system(f'echo "{enfit1_rsa_val}" > ~/.ssh/{id_rsa_name}')
+    get_ipython().system(f'echo "{id_rsa_val}" > ~/.ssh/{id_rsa_name}')
     get_ipython().system(f'chmod 600 ~/.ssh/{id_rsa_name}')
 
     ssh_config  = f"Host {hostname}\n"
