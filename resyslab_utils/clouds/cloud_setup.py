@@ -191,14 +191,31 @@ def start_vscode(ws_dir = ".",
     print(f'{"-" * 10} Finished {"-"*10}\n')
     pass # start_vscode
 
-def setup_config_github(id_rsa_val, id_rsa_name, hostname="github.com", append = False, show_id_rsa = False):
-    print(f'{"*" * 10} CONFIG GITHUB {"*"*10}')
+def setup_ssh_key(id_rsa_val = "", id_rsa_name = "id_rsa", show_id_rsa = False, force_write = False):
+    import os
+
+    print(f'{"*" * 10} SETUP SSH KEY {"*"*10}')
     
     print('> Add id_rsa...')
     get_ipython().system('mkdir -p ~/.ssh')
-    get_ipython().system(f'echo "{id_rsa_val}" > ~/.ssh/{id_rsa_name}')
+    if not os.path.exists(os.path.expanduser("~/.ssh/id_rsa")) or force_write is True:
+        if id_rsa_val != "":
+            get_ipython().system(f'echo "{id_rsa_val}" > ~/.ssh/{id_rsa_name}')
+        elif os.path.exists(f'~/.ssh/{id_rsa_name}') is False:
+            get_ipython().system(f'rm ~/.ssh/{id_rsa_name}')
+            get_ipython().system(f'ssh-keygen -f ~/.ssh/{id_rsa_name} -P ""')
     get_ipython().system(f'chmod 600 ~/.ssh/{id_rsa_name}')
 
+    print('> List ~/.ssh...')
+    get_ipython().system('ls ~/.ssh')
+
+    if show_id_rsa:
+        print('> Show id_rsa...')
+        get_ipython().system(f'cat ~/.ssh/{id_rsa_name}')
+
+def setup_config_github(id_rsa_name="id_rsa", hostname="github.com", append = False):
+    print(f'{"*" * 10} CONFIG GITHUB {"*"*10}')
+    
     ssh_config  = f"Host {hostname}\n"
     ssh_config +=  "    HostName ssh.github.com\n"
     ssh_config +=  "    User git\n"
@@ -212,14 +229,7 @@ def setup_config_github(id_rsa_val, id_rsa_name, hostname="github.com", append =
     else:
         print('> Append config file...')
         get_ipython().system('echo "$ssh_config" >> ~/.ssh/config')
-
-    print('> List ~/.ssh...')
-    get_ipython().system('ls ~/.ssh')
-    
-    if show_id_rsa:
-        print('> Show id_rsa...')
-        get_ipython().system(f'cat ~/.ssh/{id_rsa_name}')
-    
+   
     print('> Show config...')
     get_ipython().system(f'cat ~/.ssh/config')
     
