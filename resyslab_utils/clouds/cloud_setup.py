@@ -80,7 +80,7 @@ def start_ngrok(ngrok_tokens = [],
                     # 'vscode': {'port':9000, 'type':'http'}
                 },
                 ngrok_path = "/usr/local/bin/ngrok",
-                install_ngrok = False,
+                install_ngrok = True,
                ):
     """
     start_ngrok:
@@ -114,12 +114,11 @@ def start_ngrok(ngrok_tokens = [],
         print(f'> Install pyngrok...')
         get_ipython().system('pip install -qqq pyngrok 2>&1 > /dev/null')
         from pyngrok import ngrok, conf
-        install_ngrok = True
     
     if install_ngrok:
         # install ngrok
         print(f'> Install ngrok...')
-        cmd = 'curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc 2>&1 >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list 2>&1 >/dev/null && sudo apt-get update -y 2>&1 >/dev/null && sudo apt-get install -y ngrok 2>&1 > /dev/null'
+        cmd = 'command -v ngrok >/dev/null 2>&1 || curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc 2>&1 >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list 2>&1 >/dev/null && sudo apt-get update -y 2>&1 >/dev/null && sudo apt-get install -y ngrok 2>&1 > /dev/null'
         get_ipython().system(cmd)
         
     print(f'> Kill ngrok process...')
