@@ -1,10 +1,15 @@
 """
-cloud_setup
-+ start_ssh
-
-Modified: 2024/01/18
+Modified: 2026/03/31
 Created : 2024/01/18
 (c) Nhu-Tai Do
+
+cloud_setup
++ start_ssh
++ start_ngrok
++ start_vscode
++ setup_ssh_key
++ setup_config_github
++ base64_encode / base64_decode
 """
 
 def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = False):
@@ -114,7 +119,7 @@ def start_ngrok(ngrok_tokens = [],
     if install_ngrok:
         # install ngrok
         print(f'> Install ngrok...')
-        cmd = 'curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update -y && sudo apt install -y ngrok'
+        cmd = 'curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc 2>&1 >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list 2>&1 >/dev/null && sudo apt-get update -y 2>&1 >/dev/null && sudo apt-get install -y ngrok 2>&1 > /dev/null'
         get_ipython().system(cmd)
         
     print(f'> Kill ngrok process...')
@@ -153,7 +158,7 @@ def start_ngrok(ngrok_tokens = [],
 def start_vscode(ws_dir = ".", 
                  password = "12345", 
                  vscode_dir = '~/.vscode', 
-                 install = False, 
+                 install = True, 
                  extensions = ["ms-python.python", 
                                "ms-toolsai.jupyter", 
                                "mechatroner.rainbow-csv", 
@@ -171,10 +176,11 @@ def start_vscode(ws_dir = ".",
     # install code-server and start with port 9000
     if install is True:
         print('> Install Code-Server...')
-        get_ipython().system('curl -fsSL https://code-server.dev/install.sh | sh 2>&1 > /dev/null')
+        get_ipython().system('command -v code-server >/dev/null 2>&1 || curl -fsSL https://code-server.dev/install.sh | sh 2>&1 > /dev/null')
 
     print('> Run code-server...')
-    get_ipython().system(f'sudo screen -dmS vscode bash -c "PASSWORD=\"{password}\" code-server --port 9000 --bind-addr 0.0.0.0 --user-data-dir={user_data_dir} --extensions-dir={extensions_dir} --disable-telemetry {ws_dir}"')
+    get_ipython().system(f'pgrep -f code-server >/dev/null && pkill -f code-server')
+    get_ipython().system(f'nohup bash -c "PASSWORD=\"{password}\" code-server --port 9000 --bind-addr 0.0.0.0 --user-data-dir={user_data_dir} --extensions-dir={extensions_dir} --disable-telemetry {ws_dir}" & disown')
     print(f"")
 
     print('> Download and Install code-server...')
@@ -182,12 +188,7 @@ def start_vscode(ws_dir = ".",
         print(f'Install extension: {extension}...')
         get_ipython().system('code-server --install-extension $extension 2>&1 > /dev/null')
     print(f"")
-
-    print('> Screen Background...')
-    get_ipython().system('screen -wipe')
-    get_ipython().system('screen -ls')
     
-    print(f"")
     print(f'{"-" * 10} Finished {"-"*10}\n')
     pass # start_vscode
 
