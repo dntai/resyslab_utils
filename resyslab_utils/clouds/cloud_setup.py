@@ -72,8 +72,10 @@ def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = 
 def start_ngrok(ngrok_tokens = [], 
                 ngrok_binds  = {
                     'ssh': {'port':22, 'type':'tcp'}, 
-                    'vscode': {'port':9000, 'type':'http'}
-                }
+                    # 'vscode': {'port':9000, 'type':'http'}
+                },
+                ngrok_path = "/usr/local/bin/ngrok",
+                install_ngrok = False,
                ):
     """
     start_ngrok:
@@ -104,10 +106,17 @@ def start_ngrok(ngrok_tokens = [],
         from pyngrok import ngrok, conf
     except:
         # install pyngrok
-        print(f'> Install ngrok...')
+        print(f'> Install pyngrok...')
         get_ipython().system('pip install -qqq pyngrok 2>&1 > /dev/null')
         from pyngrok import ngrok, conf
-
+        install_ngrok = True
+    
+    if install_ngrok:
+        # install ngrok
+        print(f'> Install ngrok...')
+        cmd = 'curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update -y && sudo apt install -y ngrok'
+        get_ipython().system(cmd)
+        
     print(f'> Kill ngrok process...')
     get_ipython().system('kill -9 "$(pgrep ngrok)"')
     
@@ -121,6 +130,7 @@ def start_ngrok(ngrok_tokens = [],
         for region in list_regions:  
             try:
                 conf.get_default().region = region
+                conf.get_default().ngrok_path = ngrok_path
                 ngrok.set_auth_token(auth_token)
 
                 default_handler(ngrok, ngrok_info)
