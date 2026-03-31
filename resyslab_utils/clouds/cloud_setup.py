@@ -28,7 +28,7 @@ def start_ssh(id_rsa_pub = "", password = "", install_ssh = False, config_ssh = 
 
     if install_ssh is True:
         get_ipython().system('echo "> Install ssh service..."')
-        get_ipython().system('apt-get install ssh -y 2>&1 > /dev/null')
+        get_ipython().system('command -v code-server >/dev/null 2>&1 || apt-get install ssh -y 2>&1 > /dev/null')
     
     if id_rsa_pub != "":
         get_ipython().system('echo "> Copy public key to authorized keys..."')
